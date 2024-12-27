@@ -1,3 +1,5 @@
+import os.path
+
 import streamlit as st
 import pickle
 import pandas as pd
@@ -24,18 +26,32 @@ def recommend(movie):
         recommended_movies_posters.append(fetch_poster(movie_id))
 
     return recommended_movies,recommended_movies_posters
+# Cache for the similarity.pkl file download
+@st.cache_resource
+def download_similarity_file():
+    file_id = '1TZbFHGkr6xkPyf8ScQMdSFWVvovh0Qsb'  # Correct file ID
+    file_path = 'similarity.pkl'
+    if not os.path.exists(file_path):
+        url = f'https://drive.google.com/uc?export=download&id={file_id}'
+        gdown.download(url, 'similarity.pkl', quiet=False)
+    return file_path
+
+# Cache for loading similarity matrix
+@st.cache_resource
+def load_similarity_matrix():
+      # to load similarity matrix only once
+      return pickle.load(open('similarity.pkl', 'rb'))
 
 # Downloading similarity.pkl from g drive
-file_id = '1TZbFHGkr6xkPyf8ScQMdSFWVvovh0Qsb'
-url = f'https://drive.google.com/uc?export=download&id={file_id}'
-gdown.download(url, 'similarity.pkl', quiet=False)
 
 movies_dict = pickle.load(open('movie_dict.pkl','rb'))
 movies = pd.DataFrame(movies_dict)
 
 # created new df , using the imported movie_dict file
 
-similarity =  pickle.load(open('similarity.pkl','rb'))
+# Downloading and loading the similarity file (this happens only once)
+download_similarity_file()
+similarity = load_similarity_matrix()
 
 st.title("Movie Recommender System!")
 selected_movie_name = st.selectbox(
